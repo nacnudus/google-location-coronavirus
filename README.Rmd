@@ -1,0 +1,72 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# Google Location data during the Covid-19 period
+
+Archive of data extracted from Google's [Community Mobility
+Reports](https://www.google.com/covid19/mobility/).  All countries are included.
+
+```{r plot-countries-by-category, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(gghighlight)
+library(plotly)
+
+one_percent <- partial(scales::percent, accuracy = 1)
+
+df <- read_tsv("./2020-03-29.tsv", col_types = "ciccDciiccdidD")
+
+df %>%
+  filter(type == "country") %>%
+  ggplot(aes(date, trend, group = interaction(group, country_code))) +
+  geom_line(alpha = .1) +
+  scale_y_continuous(labels = one_percent) +
+  coord_cartesian(ylim = c(-1, 1)) +
+  facet_wrap(vars(category), scales = "free_y") +
+  labs(x = "", y = "Change from baseline",
+       title = "Google Community Mobility Reports per Country",
+       subtitle = "Comparison between countries is not recommended")
+```
+
+## Data download
+
+For now, download a [dated
+file](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29.tsv). It is tab-separated.
+
+## Method
+
+Based on similar work by the [Office for National Statistics Data Science
+Campus](https://github.com/datasciencecampus/mobility-report-data-extractor).
+
+1. Convert the PDF files to SVG format, and extract the trend lines.
+1. Extract text from the PDF.
+1. Pair up the text with the trends.
+
+The differences are:
+
+1. All countries are included.
+1. Using R, instead of Python
+1. Scripting pdf->svg file conversion with
+   [`pdf2svg`](https://github.com/dawbarton/pdf2svg), rather than doing it
+   manually.
+
+### Don't compare changes between countries or regions
+
+Google's note:
+
+> Location accuracy and the understanding of categorized places varies from
+> region to region, so we don’t recommend using this data to compare changes
+> between countries, or between regions with different characteristics (e.g.
+> rural versus urban areas).
+
