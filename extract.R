@@ -18,7 +18,7 @@ extract_urls <- function(url) {
     mutate(file_path = path("pdf", basename(url)))
 }
 
-download_if_not_exists <- function(file_path) {
+download_if_not_exists <- function(url, file_path) {
   if (file_exists(file_path)) return()
   download.file(url, file_path, mode = "wb")
 }
@@ -132,18 +132,17 @@ extract_region_text <- function(text) {
 #' Extract the region names and row/col from the text
 extract_region_names <- function(type, text) {
   if (type != "region") {
-    return(tibble(row = 1:3, col = 1, region_name = NA_character_))
+    return(tibble(row = 1:3, region_name = NA_character_))
   }
   text %>%
     filter(y %in% c(36, 363), height == 20) %>%
     arrange(y, x) %>%
-    group_by(y, x) %>%
+    group_by(y) %>%
     summarise(region_name = paste(text, collapse = " ")) %>%
     ungroup() %>%
     # Duplicate to two rows per place
-    mutate(row = as.integer(factor(y)) * 2L,
-           col = as.integer(factor(x))) %>%
-    select(row, col, region_name) %>%
+    mutate(row = as.integer(factor(y)) * 2L) %>%
+    select(row, region_name) %>%
     bind_rows(mutate(., row = row - 1L)) %>%
     arrange(row)
 }
@@ -185,7 +184,7 @@ extract_baselines <- function(type, text) {
 #' Join the separate panels of region names, categories and baselines
 join_panels <- function(region_name, category, baseline) {
   region_name %>%
-    inner_join(category, by = c("row", "col")) %>%
+    inner_join(category, by = "row") %>%
     inner_join(baseline, by = c("row", "col"))
 }
 
@@ -215,7 +214,7 @@ dir_create("pdf")
 df <- extract_urls(home_url)
 
 # Download the pdf files
-walk(df$file_path, download_if_not_exists)
+walk2(df$url, df$file_path, download_if_not_exists)
 
 # Convert to svg and extract the graphs
 df_trends <-
@@ -263,7 +262,9 @@ df_text <-
   mutate(panel = list(join_panels(region_name, category, baseline))) %>%
   ungroup() %>%
   select(url, page, country_code, country_name, report_date, type, panel) %>%
-  unnest(panel)
+  unnest(panel) %>%
+  select(url, page, country_code, country_name, report_date, type, row, col,
+         region_name, category, baseline)
 
 # Guess the x-width of one day between data points
 day_width <- extract_day_width(df_trends)
