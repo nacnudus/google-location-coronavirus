@@ -7,7 +7,17 @@ Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.
 
-<img src="man/figures/README-plot-countries-by-category-1.png" width="100%" />
+## Countries by category
+
+Illustration of the data only. Google recommends against comparing
+changes between countries or regions.
+
+> Location accuracy and the understanding of categorized places varies
+> from region to region, so we don’t recommend using this data to
+> compare changes between countries, or between regions with different
+> characteristics (e.g. rural versus urban areas).
+
+<img src="man/figures/README-plot-countries-by-category-1.png" width="70%" />
 
 ## Data download
 
@@ -32,12 +42,3 @@ The differences are:
 3.  Scripting pdf-\>svg file conversion with
     [`pdf2svg`](https://github.com/dawbarton/pdf2svg), rather than doing
     it manually.
-
-### Don’t compare changes between countries or regions
-
-Google’s note:
-
-> Location accuracy and the understanding of categorized places varies
-> from region to region, so we don’t recommend using this data to
-> compare changes between countries, or between regions with different
-> characteristics (e.g. rural versus urban areas).

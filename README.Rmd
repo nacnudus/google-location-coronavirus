@@ -9,7 +9,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "100%"
+  out.width = "70%"
 )
 ```
 
@@ -17,6 +17,16 @@ knitr::opts_chunk$set(
 
 Archive of data extracted from Google's [Community Mobility
 Reports](https://www.google.com/covid19/mobility/).  All countries are included.
+
+## Countries by category
+
+Illustration of the data only.  Google recommends against comparing changes
+between countries or regions.
+
+> Location accuracy and the understanding of categorized places varies from
+> region to region, so we don’t recommend using this data to compare changes
+> between countries, or between regions with different characteristics (e.g.
+> rural versus urban areas).
 
 ```{r plot-countries-by-category, echo = FALSE, message = FALSE}
 library(tidyverse)
@@ -60,13 +70,4 @@ The differences are:
 1. Scripting pdf->svg file conversion with
    [`pdf2svg`](https://github.com/dawbarton/pdf2svg), rather than doing it
    manually.
-
-### Don't compare changes between countries or regions
-
-Google's note:
-
-> Location accuracy and the understanding of categorized places varies from
-> region to region, so we don’t recommend using this data to compare changes
-> between countries, or between regions with different characteristics (e.g.
-> rural versus urban areas).
 
