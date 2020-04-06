@@ -6,7 +6,7 @@ Reports](https://www.google.com/covid19/mobility/).  All countries are included.
 ## Data download
 
 For now, download a [dated
-file](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/final.tsv). It is tab-separated.
+file](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29.tsv). It is tab-separated.
 
 ## Method
 
