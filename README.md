@@ -7,7 +7,13 @@ Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.
 
-# **DATA HAS PROBLEMS. PLEASE RETURN LATER ONCE THEY ARE FIXED.**
+## Data Quality
+
+The onus is on you to check against the originnal PDF files, but this
+should be okay to use. Previous problems have been fixed. It has been
+checked against similar work by the [Office for National Statistics Data
+Science
+Campus](https://github.com/datasciencecampus/mobility-report-data-extractor).
 
 ## Countries by category
 
