@@ -39,40 +39,89 @@ pdf_to_svg <- function(file_path) {
   dir_ls(svg_dir)
 }
 
-#' Extract geometry from svg file
-extract_geometry <- function(svg_path) {
-  cat("Extracting geometry: ", svg_path, "\n")
-  element <-
-    svg_path %>%
-    read_xml() %>%
-    xml_ns_strip() %>%
-    xml_find_all("//path[@style='fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(25.878906%,52.159119%,95.689392%);stroke-opacity:1;stroke-miterlimit:4;']")
-  if (length(element) == 0) return(tibble()) # no graph
-  geometry <- xml_attr(element, "d")   # the data points
-  panel <-                             # the row and column of the graph
-    element %>%
-    xml_attr("transform") %>%
-    str_sub(8, -2) %>%
-    str_split(",") %>%
-    map(~ .x[5:6]) %>%                 # x,y of the corner of the graph
-    transpose() %>%
-    map(unlist) %>%
-    map(as.numeric) %>%
-    set_names(c("col", "row"))
-  # Renumber the row/col from being an x,y coordinate to being the position of
-  # the graph on the page, either 3 rows of 1 column, or 4 rows of 3 columns.
-  panel$row <- as.integer(as_factor(panel$row))
-  panel$col <- as.integer(as_factor(panel$col))
-  tibble(geometry, row = panel$row, col = panel$col)
-}
-
 #' Convert a string of coordinates to a tibble
-parse_geometry <- function(geometry) {
-  geometry %>%
+element_to_tibble <- function(element, transform_matrix) {
+  element %>%
+    xml_attr("d") %>%
     str_replace_all(" Z", "") %>%        # Remove close path commands
     str_replace_all("(?<=[0-9]) (?=[A-Z])", "\n") %>% # Separate into rows
     str_trim() %>%
-    map_dfr(read_table2, col_names = c("command", "x", "y"), col_types = "cdd")
+    map_dfr(
+      read_table2,
+      col_names = c("command", "x", "y"),
+      col_types = "cdd"
+    ) %>%
+    mutate(xy = map2(x, y, ~ matrix(c(.x, .y, 1), ncol = 1))) %>%
+    mutate(xy = map(xy, ~ transform_matrix %*% .x)) %>% # transform
+    hoist(xy, x = 1, y = 2) %>%
+    select(-xy)
+}
+
+#' Extract a transformation matrix from a line element
+extract_transform_matrix <- function(line_element) {
+  matrix_row_3 <- matrix(c(0, 0, 1), ncol = 3) # 3rd row of svg transform matrix
+  line_element %>%
+    xml_attr("transform") %>%
+    str_sub(8, -2) %>%
+    str_split(",") %>%
+    map(as.numeric) %>%
+    map(matrix, ncol = 3) %>%
+    map(rbind, matrix_row_3)
+}
+
+#' Extract data points from line element
+parse_element <- function(element) {
+  line_transform_matrix <- extract_transform_matrix(element)
+  map2(
+      element,
+      line_transform_matrix,
+      element_to_tibble
+    ) %>%
+    bind_rows(.id = "id") %>%
+    group_by(id) %>%
+    # Calculate row/col of each line from x/y coordinates
+    mutate(row = min(y), col = min(x)) %>%
+    ungroup() %>%
+    mutate(
+      row = as.integer(factor(row)),
+      col = as.integer(factor(col))
+    ) %>%
+    select(row, col, command, x, y)
+}
+
+#' Extract geometry from svg file
+extract_geometry <- function(svg_path) {
+  cat("Extracting geometry: ", svg_path, "\n")
+  svg <-
+    svg_path %>%
+    read_xml() %>%
+    xml_ns_strip()
+  # Parse the trend line
+  trend_element <-
+    svg %>%
+    xml_find_all("//path[@style='fill:none;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(25.878906%,52.159119%,95.689392%);stroke-opacity:1;stroke-miterlimit:4;']")
+  if (length(trend_element) == 0) return(tibble()) # no graph
+  trend <- parse_element(trend_element)
+  # Parse the baseline
+  baseline_element <-
+    svg %>%
+    xml_find_all("//path[@style='fill:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(85.488892%,86.268616%,87.838745%);stroke-opacity:1;stroke-miterlimit:4;']")
+  # Keep the middle line of each graph.  There are either 3 or 5 lines per
+  # graph.
+  lines_per_graph <- length(baseline_element) / length(trend_element)
+  middle_line_index <-
+    seq(
+      lines_per_graph,
+      length(baseline_element),
+      by = lines_per_graph
+    ) - 2
+  baseline_element <- baseline_element[middle_line_index]
+  baseline <-
+    parse_line_element(baseline_element) %>%
+    filter(command == "M") %>%          # Keep only one point of each line
+    rename(baseline = y) %>%
+    select(-command, -x)
+  inner_join(baseline, trend, by = c("col", "row"))
 }
 
 #' Extract the width of one day on the x-axis from the strokes
@@ -167,7 +216,7 @@ extract_categories <- function(type, page, text) {
 }
 
 #' Extract the baselines and row/col from the text
-extract_baselines <- function(type, text) {
+extract_baseline_comparisons <- function(type, text) {
   text %>%
     filter(
       switch(type,
@@ -175,24 +224,24 @@ extract_baselines <- function(type, text) {
         region = y %in% c(104, 242, 431, 568) & height == 13
       )
     ) %>%
-    mutate(baseline = parse_number(text) / 100) %>%
+    mutate(baseline_comparison = parse_number(text) / 100) %>%
     mutate(row = as.integer(factor(y)),
            col = as.integer(factor(x))) %>%
-    select(row, col, baseline)
+    select(row, col, baseline_comparison)
 }
 
 #' Join the separate panels of region names, categories and baselines
-join_panels <- function(region_name, category, baseline) {
+join_panels <- function(region_name, category, baseline_comparison) {
   region_name %>%
     inner_join(category, by = "row") %>%
-    inner_join(baseline, by = c("row", "col"))
+    inner_join(baseline_comparison, by = c("row", "col"))
 }
 
 #' Scale y-values by the baseline
-scale_y <- function(y, baseline) {
-  diff_from_first <- y - first(y)
-  scale <- last(diff_from_first) / baseline
-  diff_from_first / scale
+scale_y <- function(y, baseline, baseline_comparison) {
+  diff_from_baseline <- y - baseline
+  scale <- tail(diff_from_baseline, 1) / baseline_comparison[1]
+  diff_from_baseline / scale
 }
 
 #' Convert x-values to dates
@@ -225,18 +274,12 @@ df_trends <-
   mutate(page = row_number()) %>%
   ungroup() %>%
   mutate(type = if_else(page <= 2, "country", "region")) %>%
-  mutate(geometry = map(svg_path, extract_geometry))  %>% # extract geometry from svg
-  unnest(geometry) %>%
-  group_by(url, page) %>%
-  # mutate(stroke = row_number()) %>%
-  mutate(geometry = map(geometry, parse_geometry)) %>% # parse geometry to tibble
-  select(-type) %>%
-  unnest(geometry) %>%
-  mutate(y = -y) %>%                   # Flip y coords to be positive at the top
+  mutate(geometry = map(svg_path, extract_geometry)) %>% # extract geometry from svg
+  unnest(geometry)
   group_by(url, page, row, col) %>%
   mutate(group = cumsum(command == "M")) %>% # group sections of strokes
   ungroup() %>%
-  select(-file_path, -svg_path, -command)
+  select(-file_path, -svg_path, -command, -type)
 
 # Extract the text from the pdf
 df_text <-
@@ -256,29 +299,33 @@ df_text <-
   ungroup() %>%
   # Extract the panel region names, categories and baselines
   rowwise() %>%
-  mutate(region_name = list(extract_region_names(type, text))) %>%
-  mutate(category = list(extract_categories(type, page, text))) %>%
-  mutate(baseline = list(extract_baselines(type, text))) %>%
-  mutate(panel = list(join_panels(region_name, category, baseline))) %>%
+  mutate(
+    region_name = list(extract_region_names(type, text)),
+    category = list(extract_categories(type, page, text)),
+    baseline_comparison = list(extract_baseline_comparisons(type, text)),
+    panel = list(join_panels(region_name, category, baseline_comparison))
+  ) %>%
   ungroup() %>%
   select(url, page, country_code, country_name, report_date, type, panel) %>%
   unnest(panel) %>%
   select(url, page, country_code, country_name, report_date, type, row, col,
-         region_name, category, baseline)
+         region_name, category, baseline_comparison)
 
 # Guess the x-width of one day between data points
 day_width <- extract_day_width(df_trends)
 
 # Pair up the text with the trends
 final <-
-  inner_join(df_text, df_trends, by = c("url", "page", "row", "col")) %>%
+  df_text %>%
+  select(-type) %>%
+  inner_join(df_trends, by = c("url", "page", "row", "col")) %>%
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
   mutate(
-    trend = scale_y(y, baseline),
+    trend = scale_y(y, baseline, baseline_comparison),
     date = x_to_date(x, report_date)
   ) %>%
   ungroup() %>%
-  select(-x, -y)
+  select(-x, -y, -baseline)
 
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
