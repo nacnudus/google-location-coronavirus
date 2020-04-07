@@ -7,6 +7,8 @@ Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.
 
+# **DATA HAS PROBLEMS. PLEASE RETURN LATER ONCE THEY ARE FIXED.**
+
 ## Countries by category
 
 Illustration of the data only. Google recommends against comparing
