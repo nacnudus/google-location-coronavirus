@@ -275,7 +275,7 @@ df_trends <-
   ungroup() %>%
   mutate(type = if_else(page <= 2, "country", "region")) %>%
   mutate(geometry = map(svg_path, extract_geometry)) %>% # extract geometry from svg
-  unnest(geometry)
+  unnest(geometry) %>%
   group_by(url, page, row, col) %>%
   mutate(group = cumsum(command == "M")) %>% # group sections of strokes
   ungroup() %>%
