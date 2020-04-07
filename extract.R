@@ -317,7 +317,8 @@ day_width <- extract_day_width(df_trends)
 # Pair up the text with the trends
 final <-
   df_text %>%
-  inner_join(df_trends, by = c("url", "page", "row", "col")) %>%
+  inner_join(mutate(df_trends, col = if_else(page %in% c(1, 2), 1L, col)),
+             by = c("url", "page", "row", "col")) %>%
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
   mutate(
@@ -326,5 +327,8 @@ final <-
   ) %>%
   ungroup() %>%
   select(-x, -y, -baseline)
+
+final %>%
+  filter(country_code == "GB", type == "country", category == "Residential")
 
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
