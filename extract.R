@@ -270,9 +270,7 @@ df_trends <-
   df %>%
   mutate(svg_path = map(file_path, pdf_to_svg)) %>% # convert pdf pages to svg
   unnest(svg_path) %>%
-  group_by(url) %>%
-  mutate(page = row_number()) %>%
-  ungroup() %>%
+  mutate(page = as.integer(str_extract(svg_path, "[0-9]+(?=\\.pdf$)"))) %>%
   mutate(type = if_else(page <= 2, "country", "region")) %>%
   mutate(geometry = map(svg_path, extract_geometry)) %>% # extract geometry from svg
   unnest(geometry) %>%
@@ -316,9 +314,7 @@ day_width <- extract_day_width(df_trends)
 
 # Pair up the text with the trends
 final <-
-  df_text %>%
-  inner_join(mutate(df_trends, col = if_else(page %in% c(1, 2), 1L, col)),
-             by = c("url", "page", "row", "col")) %>%
+  inner_join(df_text, df_trends, by = c("url", "page", "row", "col")) %>%
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
   mutate(
@@ -327,8 +323,5 @@ final <-
   ) %>%
   ungroup() %>%
   select(-x, -y, -baseline)
-
-final %>%
-  filter(country_code == "GB", type == "country", category == "Residential")
 
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
