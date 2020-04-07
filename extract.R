@@ -317,7 +317,6 @@ day_width <- extract_day_width(df_trends)
 # Pair up the text with the trends
 final <-
   df_text %>%
-  select(-type) %>%
   inner_join(df_trends, by = c("url", "page", "row", "col")) %>%
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
