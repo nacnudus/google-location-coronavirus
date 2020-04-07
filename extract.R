@@ -77,17 +77,7 @@ parse_element <- function(element) {
       line_transform_matrix,
       element_to_tibble
     ) %>%
-    bind_rows(.id = "id") %>%
-    group_by(id) %>%
-    # Calculate row/col of each line from x/y coordinates
-    mutate(row = min(y), col = min(x)) %>%
-    mutate(row = round(row, -2)) %>%
-    ungroup() %>%
-    mutate(
-      row = as.integer(factor(row)),
-      col = as.integer(factor(col))
-    ) %>%
-    select(row, col, command, x, y)
+    bind_rows()
 }
 
 #' Extract geometry from svg file
@@ -107,9 +97,8 @@ extract_geometry <- function(svg_path) {
   baseline_element <-
     svg %>%
     xml_find_all("//path[@style='fill:none;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(85.488892%,86.268616%,87.838745%);stroke-opacity:1;stroke-miterlimit:4;']")
-  # Keep the middle line of each graph.  There are either 3 or 5 lines per
-  # graph.
-  lines_per_graph <- length(baseline_element) / length(trend_element)
+  # Keep the middle line of each graph.  There are 5 lines per graph
+  lines_per_graph <- 5
   middle_line_index <-
     seq(
       lines_per_graph,
@@ -118,10 +107,22 @@ extract_geometry <- function(svg_path) {
     ) - 2
   baseline_element <- baseline_element[middle_line_index]
   baseline <-
-    parse_line_element(baseline_element) %>%
-    filter(command == "M") %>%          # Keep only one point of each line
-    rename(baseline = y) %>%
-    select(-command, -x)
+    parse_element(baseline_element) %>%
+    filter(command == "L") %>%     # Keep only the right-end point of each line
+    rename(baseline_x = x, baseline = y) %>%
+    select(-command)
+  # Assign trend lines to baselines
+  unique_baselines <- sort(unique(round(baseline$baseline, -2)))
+  # Midpoints between baselines https://stackoverflow.com/a/54147509/937932
+  midpoints <-
+    unique_baselines[-length(unique_baselines)] +
+    diff(unique_baselines) / 2
+  y_cutpoints <- sort(c(0, Inf, midpoints))
+  x_cutpoints <- sort(c(0, unique(baseline$baseline_x) + 1)) # rounding margin
+  trend <-
+    trend %>%
+    mutate(row = findInterval(y, y_cutpoints),
+           col = findInterval(x, x_cutpoints))
   inner_join(baseline, trend, by = c("col", "row"))
 }
 
@@ -246,10 +247,8 @@ scale_y <- function(y, baseline, baseline_comparison) {
 }
 
 #' Convert x-values to dates
-x_to_date <- function(x, report_date) {
-  day_diff <- round((x - lag(x)) / day_width)
-  day_diff <- replace_na(day_diff, 1)
-  report_date - days(rev(cumsum(day_diff)) - 1)
+x_to_date <- function(x, baseline_x, report_date) {
+  report_date - days(round((baseline_x - x) / day_width))
 }
 
 # Main script ------------------------------------------------------------------
@@ -320,9 +319,9 @@ final <-
   arrange(url, page, row, col, x) %>%
   mutate(
     trend = scale_y(y, baseline, baseline_comparison),
-    date = x_to_date(x, report_date)
+    date = x_to_date(x, baseline_x, report_date)
   ) %>%
   ungroup() %>%
-  select(-x, -y, -baseline)
+  select(-x, -y, -baseline, -baseline_x)
 
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
