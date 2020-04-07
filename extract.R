@@ -81,6 +81,7 @@ parse_element <- function(element) {
     group_by(id) %>%
     # Calculate row/col of each line from x/y coordinates
     mutate(row = min(y), col = min(x)) %>%
+    mutate(row = round(row, -2)) %>%
     ungroup() %>%
     mutate(
       row = as.integer(factor(row)),
