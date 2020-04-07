@@ -50,3 +50,10 @@ The differences are:
 3.  Scripting pdf-\>svg file conversion with
     [`pdf2svg`](https://github.com/dawbarton/pdf2svg), rather than doing
     it manually.
+
+## Related work
+
+  - <https://github.com/mattkerlogue/google-covid-mobility-scrape>
+  - <https://github.com/reconhub/covid19hub/issues/2>
+  - <https://github.com/pastelsky/covid-19-mobility-tracker>
+  - <https://github.com/vitorbaptista/google-covid19-mobility-reports>
