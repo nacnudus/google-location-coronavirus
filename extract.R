@@ -9,10 +9,19 @@ library(lubridate)
 # Utility functions ------------------------------------------------------------
 
 #' Extract URLs from home page
-extract_urls <- function(url) {
+extract_country_urls <- function(url) {
   url %>%
     read_html() %>%
     html_nodes(".country-data a") %>%
+    html_attr("href") %>%
+    tibble(url = .) %>%
+    mutate(file_path = path("pdf", basename(url)))
+}
+
+extract_region_urls <- function(url) {
+  url %>%
+    read_html() %>%
+    html_nodes(".region-row a") %>%
     html_attr("href") %>%
     tibble(url = .) %>%
     mutate(file_path = path("pdf", basename(url)))
@@ -167,10 +176,11 @@ extract_title <- function(text) {
     pull(text)
 }
 
-#' Extract the country name from the title
-extract_country_name <- function(title) {
+#' Extract the country or region name from the title
+extract_report_name <- function(title) {
   paste(head(title, -3), collapse = " ")
 }
+
 
 #' Extract the report date from the title
 extract_report_date <- function(title) {
@@ -259,7 +269,7 @@ scale_y <- function(y, baseline, baseline_80) {
 }
 
 #' Convert x-values to dates
-x_to_date <- function(x, baseline_x, report_date) {
+x_to_date <- function(x, baseline_x, report_date, day_width) {
   report_date - days(round((baseline_x - x) / day_width))
 }
 
@@ -271,15 +281,17 @@ home_url <- "https://www.google.com/covid19/mobility/"
 # A folder to store the PDF files
 dir_create("pdf")
 
+## Countries -------------------------------------------------------------------
+
 # A data frame to collect the data, beginning with the URL of each pdf
-df <- extract_urls(home_url)
+df_country <- extract_country_urls(home_url)
 
 # Download the pdf files
-walk2(df$url, df$file_path, download_if_not_exists)
+walk2(df_country$url, df_country$file_path, download_if_not_exists)
 
 # Convert to svg and extract the graphs
-df_trends <-
-  df %>%
+df_country_trends <-
+  df_country %>%
   mutate(svg_path = map(file_path, pdf_to_svg)) %>% # convert pdf pages to svg
   unnest(svg_path) %>%
   mutate(page = as.integer(str_extract(svg_path, "[0-9]+(?=\\.pdf$)"))) %>%
@@ -292,12 +304,12 @@ df_trends <-
   select(-file_path, -svg_path, -command, -type)
 
 # Extract the text from the pdf
-df_text <-
-  df %>%
+df_country_text <-
+  df_country %>%
   mutate(country_code = str_extract(url, "(?<=_)[A-Z]{2}(?=_)")) %>%
   mutate(text = map(file_path, extract_text)) %>%
   mutate(title = map(text, extract_title),
-         country_name = map_chr(title, extract_country_name),
+         country_name = map_chr(title, extract_report_name),
          report_date = do.call(c, map(title, extract_report_date))) %>%
   select(-title) %>%
   # Split the text into pages
@@ -322,18 +334,96 @@ df_text <-
          region_name, category, baseline_comparison)
 
 # Guess the x-width of one day between data points
-day_width <- extract_day_width(df_trends)
+day_width_country <- extract_day_width(df_country_trends)
 
 # Pair up the text with the trends
-final <-
-  inner_join(df_text, df_trends, by = c("url", "page", "row", "col")) %>%
+final_country <-
+  inner_join(df_country_text, df_country_trends,
+             by = c("url", "page", "row", "col")) %>%
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
   mutate(
     trend = scale_y(y, baseline, baseline_80),
-    date = x_to_date(x, baseline_x, report_date)
+    date = x_to_date(x, baseline_x, report_date, day_width_country)
   ) %>%
   ungroup() %>%
   select(-x, -y, -baseline, -baseline_80, -baseline_x)
 
-write_tsv(final, paste0(max(final$report_date), ".tsv"))
+write_tsv(
+  final_country,
+  paste0(max(final_country$report_date), "-country", ".tsv")
+)
+
+## Regions ---------------------------------------------------------------------
+
+# A data frame to collect the data, beginning with the URL of each pdf
+df_region <- extract_region_urls(home_url)
+
+# Download the pdf files
+walk2(df_region$url, df_region$file_path, download_if_not_exists)
+
+# Convert to svg and extract the graphs
+df_region_trends <-
+  df_region %>%
+  mutate(svg_path = map(file_path, pdf_to_svg)) %>% # convert pdf pages to svg
+  unnest(svg_path) %>%
+  mutate(page = as.integer(str_extract(svg_path, "[0-9]+(?=\\.pdf$)"))) %>%
+  mutate(type = if_else(page <= 2, "region", "sub-region")) %>%
+  mutate(geometry = map(svg_path, extract_geometry)) %>% # extract geometry from svg
+  unnest(geometry) %>%
+  group_by(url, page, row, col) %>%
+  mutate(group = cumsum(command == "M")) %>% # group sections of strokes
+  ungroup() %>%
+  select(-file_path, -svg_path, -command, -type)
+
+# Extract the text from the pdf
+df_region_text <-
+  df_region %>%
+  mutate(country_code = str_extract(url, "(?<=_)[A-Z]{2}(?=_)")) %>%
+  mutate(text = map(file_path, extract_text)) %>%
+  mutate(title = map(text, extract_title),
+         country_name = map_chr(title, extract_report_name),
+         report_date = do.call(c, map(title, extract_report_date))) %>%
+  select(-title) %>%
+  # Split the text into pages
+  mutate(text = map(text, nest_by, page, .key = "text")) %>%
+  unnest(text) %>%
+  mutate(type = if_else(page <= 2, "region", "sub-region")) %>%
+  group_by(url) %>%
+  filter(page != max(page)) %>%        # Drop the final page, which is notes
+  ungroup() %>%
+  # Extract the panel region names, categories and baselines
+  rowwise() %>%
+  mutate(
+    region_name = list(extract_region_names(type, text)),
+    category = list(extract_categories(type, page, text)),
+    baseline_comparison = list(extract_baseline_comparisons(type, text)),
+    panel = list(join_panels(region_name, category, baseline_comparison))
+  ) %>%
+  ungroup() %>%
+  select(url, page, country_code, country_name, report_date, type, panel) %>%
+  unnest(panel) %>%
+  select(url, page, country_code, country_name, report_date, type, row, col,
+         region_name, category, baseline_comparison) %>%
+  rename(sub_region_name = region_name) %>%
+  rename(region_name = country_name)
+
+day_width_region <- extract_day_width(df_region_trends)
+
+# Pair up the text with the trends
+final_region <-
+  inner_join(df_region_text, df_region_trends,
+             by = c("url", "page", "row", "col")) %>%
+  group_by(url, page, row, col) %>%
+  arrange(url, page, row, col, x) %>%
+  mutate(
+    trend = scale_y(y, baseline, baseline_80),
+    date = x_to_date(x, baseline_x, report_date, day_width_region)
+  ) %>%
+  ungroup() %>%
+  select(-x, -y, -baseline, -baseline_80, -baseline_x)
+
+write_tsv(
+  final_region,
+  paste0(max(final_region$report_date), "-region", ".tsv")
+)
