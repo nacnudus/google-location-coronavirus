@@ -336,16 +336,4 @@ final <-
   ungroup() %>%
   select(-x, -y, -baseline, -baseline_80, -baseline_x)
 
-  inner_join(df_text, df_trends, by = c("url", "page", "row", "col")) %>%
-  filter(region_name == "Varmland County", category == "Parks") %>%
-  group_by(url, page, row, col) %>%
-  arrange(url, page, row, col, x) %>%
-  mutate(
-    trend = scale_y(y, baseline, baseline_80),
-    date = x_to_date(x, baseline_x, report_date)
-  ) %>%
-  ungroup() %>%
-  select(-x, -y, -baseline, -baseline_x) %>%
-  select(date, trend)
-
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
