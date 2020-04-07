@@ -105,12 +105,18 @@ extract_geometry <- function(svg_path) {
       length(baseline_element),
       by = lines_per_graph
     ) - 2
-  baseline_element <- baseline_element[middle_line_index]
+  baseline_element_80 <- baseline_element[middle_line_index - 2] # 80% line
+  baseline_80 <-
+    parse_element(baseline_element_80) %>%
+    filter(command == "L") %>%     # Keep only the right-end point of each line
+    pull(y)
+  baseline_element_0 <- baseline_element[middle_line_index]
   baseline <-
-    parse_element(baseline_element) %>%
+    parse_element(baseline_element_0) %>%
     filter(command == "L") %>%     # Keep only the right-end point of each line
     rename(baseline_x = x, baseline = y) %>%
     select(-command)
+  baseline$baseline_80 <- baseline_80
   # Assign trend lines to baselines
   unique_baselines <- sort(unique(round(baseline$baseline, -2)))
   # Midpoints between baselines https://stackoverflow.com/a/54147509/937932
@@ -123,6 +129,10 @@ extract_geometry <- function(svg_path) {
     trend %>%
     mutate(row = findInterval(y, y_cutpoints),
            col = findInterval(x, x_cutpoints))
+  baseline <-
+    baseline %>%
+    mutate(row = findInterval(baseline, y_cutpoints),
+           col = findInterval(baseline_x, x_cutpoints))
   inner_join(baseline, trend, by = c("col", "row"))
 }
 
@@ -240,9 +250,11 @@ join_panels <- function(region_name, category, baseline_comparison) {
 }
 
 #' Scale y-values by the baseline
-scale_y <- function(y, baseline, baseline_comparison) {
+scale_y <- function(y, baseline, baseline_80) {
+  baseline <- baseline[1]
+  baseline_80 <- baseline_80[1]
   diff_from_baseline <- y - baseline
-  scale <- tail(diff_from_baseline, 1) / baseline_comparison[1]
+  scale <- (baseline_80 - baseline) / -0.8
   diff_from_baseline / scale
 }
 
@@ -318,10 +330,22 @@ final <-
   group_by(url, page, row, col) %>%
   arrange(url, page, row, col, x) %>%
   mutate(
-    trend = scale_y(y, baseline, baseline_comparison),
+    trend = scale_y(y, baseline, baseline_80),
     date = x_to_date(x, baseline_x, report_date)
   ) %>%
   ungroup() %>%
-  select(-x, -y, -baseline, -baseline_x)
+  select(-x, -y, -baseline, -baseline_80, -baseline_x)
+
+  inner_join(df_text, df_trends, by = c("url", "page", "row", "col")) %>%
+  filter(region_name == "Varmland County", category == "Parks") %>%
+  group_by(url, page, row, col) %>%
+  arrange(url, page, row, col, x) %>%
+  mutate(
+    trend = scale_y(y, baseline, baseline_80),
+    date = x_to_date(x, baseline_x, report_date)
+  ) %>%
+  ungroup() %>%
+  select(-x, -y, -baseline, -baseline_x) %>%
+  select(date, trend)
 
 write_tsv(final, paste0(max(final$report_date), ".tsv"))
