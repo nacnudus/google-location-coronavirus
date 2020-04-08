@@ -25,7 +25,9 @@ changes between countries or regions.
 > compare changes between countries, or between regions with different
 > characteristics (e.g. rural versus urban areas).
 
-<img src="man/figures/README-plot-countries-by-category-1.png" width="70%" /><img src="man/figures/README-plot-countries-by-category-2.png" width="70%" />
+<img src="man/figures/README-plot-countries-by-category-1.png" width="70%" />
+
+<img src="man/figures/README-plot-us-counties-by-category-1.png" width="70%" />
 
 ## Data download
 

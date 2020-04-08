@@ -56,7 +56,9 @@ country %>%
        subtitle = "Comparison between countries is not recommended") +
   theme_bw() +
   theme(panel.grid = element_blank())
+```
 
+```{r plot-us-counties-by-category, echo = FALSE, message = FALSE}
 region <- read_tsv("./2020-03-29-region.tsv", col_types = "ciccDciiccdidD")
 
 region %>%
