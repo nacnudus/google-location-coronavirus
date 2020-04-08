@@ -382,31 +382,33 @@ df_region_text <-
   mutate(country_code = str_extract(url, "(?<=_)[A-Z]{2}(?=_)")) %>%
   mutate(text = map(file_path, extract_text)) %>%
   mutate(title = map(text, extract_title),
-         country_name = map_chr(title, extract_report_name),
+         region_name = map_chr(title, extract_report_name),
          report_date = do.call(c, map(title, extract_report_date))) %>%
   select(-title) %>%
   # Split the text into pages
   mutate(text = map(text, nest_by, page, .key = "text")) %>%
   unnest(text) %>%
-  mutate(type = if_else(page <= 2, "region", "sub-region")) %>%
+  mutate(type = if_else(page <= 2, "country", "region")) %>%
   group_by(url) %>%
   filter(page != max(page)) %>%        # Drop the final page, which is notes
   ungroup() %>%
-  # Extract the panel region names, categories and baselines
+  # Extract the panel subregion names, categories and baselines
   rowwise() %>%
   mutate(
-    region_name = list(extract_region_names(type, text)),
+    sub_region_name = list(extract_region_names(type, text)),
     category = list(extract_categories(type, page, text)),
     baseline_comparison = list(extract_baseline_comparisons(type, text)),
-    panel = list(join_panels(region_name, category, baseline_comparison))
+    panel = list(join_panels(sub_region_name, category, baseline_comparison))
   ) %>%
   ungroup() %>%
-  select(url, page, country_code, country_name, report_date, type, panel) %>%
+  mutate(panel = map(panel, ~ rename(.x, sub_region_name = region_name))) %>%
+  select(url, page, country_code, region_name, report_date, type, panel) %>%
   unnest(panel) %>%
-  select(url, page, country_code, country_name, report_date, type, row, col,
-         region_name, category, baseline_comparison) %>%
-  rename(sub_region_name = region_name) %>%
-  rename(region_name = country_name)
+  select(url, page, country_code, region_name, report_date, type, row, col,
+         sub_region_name, category, baseline_comparison) %>%
+  mutate(type = as.character(fct_recode(as_factor(type),
+                                        `sub-region` = "region",
+                                        region = "country")))
 
 day_width_region <- extract_day_width(df_region_trends)
 

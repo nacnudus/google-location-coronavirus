@@ -42,9 +42,9 @@ library(plotly)
 
 one_percent <- partial(scales::percent, accuracy = 1)
 
-df <- read_tsv("./2020-03-29.tsv", col_types = "ciccDciiccdidD")
+country <- read_tsv("./2020-03-29-country.tsv", col_types = "ciccDciiccdidD")
 
-df %>%
+country %>%
   filter(type == "country") %>%
   ggplot(aes(date, trend, group = interaction(group, country_code))) +
   geom_line(alpha = .1) +
@@ -53,13 +53,34 @@ df %>%
   facet_wrap(vars(category), scales = "free_y") +
   labs(x = "", y = "Change from baseline",
        title = "Google Community Mobility Reports per Country",
-       subtitle = "Comparison between countries is not recommended")
+       subtitle = "Comparison between countries is not recommended") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
+
+region <- read_tsv("./2020-03-29-region.tsv", col_types = "ciccDciiccdidD")
+
+region %>%
+  filter(type == "sub-region") %>%
+  ggplot(aes(date, trend,
+             group = interaction(group, region_name, sub_region_name))) +
+  geom_line(alpha = .01) +
+  scale_y_continuous(labels = one_percent) +
+  coord_cartesian(ylim = c(-1, 1)) +
+  facet_wrap(vars(category), scales = "free_y") +
+  labs(x = "", y = "Change from baseline",
+       title = "Google Community Mobility Reports per US county",
+       subtitle = "Comparison between regions is not recommended") +
+  theme_bw() +
+  theme(panel.grid = element_blank())
 ```
 
 ## Data download
 
-For now, download a [dated
-file](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29.tsv). It is tab-separated.
+For now, download a dated file of
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-country.tsv)
+or [United States
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-region.tsv).
+They are tab-separated.
 
 ## Method
 

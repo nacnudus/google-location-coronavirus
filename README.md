@@ -25,13 +25,15 @@ changes between countries or regions.
 > compare changes between countries, or between regions with different
 > characteristics (e.g. rural versus urban areas).
 
-<img src="man/figures/README-plot-countries-by-category-1.png" width="70%" />
+<img src="man/figures/README-plot-countries-by-category-1.png" width="70%" /><img src="man/figures/README-plot-countries-by-category-2.png" width="70%" />
 
 ## Data download
 
-For now, download a [dated
-file](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29.tsv).
-It is tab-separated.
+For now, download a dated file of
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-country.tsv)
+or [United States
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-region.tsv).
+They are tab-separated.
 
 ## Method
 
