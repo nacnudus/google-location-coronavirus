@@ -35,9 +35,9 @@ changes between countries or regions.
 ## Data download
 
 For now, download a dated file of
-[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-country.tsv)
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-country.tsv)
 or [United States
-counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-region.tsv).
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-region.tsv).
 They are tab-separated.
 
 ## Method

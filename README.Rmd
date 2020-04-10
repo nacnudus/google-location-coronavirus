@@ -37,7 +37,7 @@ between countries or regions.
 > between countries, or between regions with different characteristics (e.g.
 > rural versus urban areas).
 
-```{r plot-countries-by-category, echo = FALSE, message = FALSE}
+```{r plot-countries-by-category, echo = FALSE, message = FALSE, cache = TRUE}
 library(tidyverse)
 library(gghighlight)
 library(plotly)
@@ -60,7 +60,7 @@ country %>%
   theme(panel.grid = element_blank())
 ```
 
-```{r plot-us-counties-by-category, echo = FALSE, message = FALSE}
+```{r plot-us-counties-by-category, echo = FALSE, message = FALSE, cache = TRUE}
 region <- read_tsv("./2020-04-05-region.tsv", col_types = "ciccDciiccdidD")
 
 region %>%
@@ -81,9 +81,9 @@ region %>%
 ## Data download
 
 For now, download a dated file of
-[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-country.tsv)
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-country.tsv)
 or [United States
-counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-03-29-region.tsv).
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-region.tsv).
 They are tab-separated.
 
 ## Method
