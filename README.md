@@ -7,6 +7,9 @@ Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.
 
+Last updated on the 10th of April 2020, with data up to the 5th of April
+2020.
+
 ## Data Quality
 
 The onus is on you to check against the originnal PDF files, but this

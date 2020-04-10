@@ -18,6 +18,8 @@ knitr::opts_chunk$set(
 Archive of data extracted from Google's [Community Mobility
 Reports](https://www.google.com/covid19/mobility/).  All countries are included.
 
+Last updated on the 10th of April 2020, with data up to the 5th of April 2020.
+
 ## Data Quality
 
 The onus is on you to check against the originnal PDF files, but this should be
@@ -42,7 +44,7 @@ library(plotly)
 
 one_percent <- partial(scales::percent, accuracy = 1)
 
-country <- read_tsv("./2020-03-29-country.tsv", col_types = "ciccDciiccdidD")
+country <- read_tsv("./2020-04-05-country.tsv", col_types = "ciccDciiccdidD")
 
 country %>%
   filter(type == "country") %>%
@@ -59,7 +61,7 @@ country %>%
 ```
 
 ```{r plot-us-counties-by-category, echo = FALSE, message = FALSE}
-region <- read_tsv("./2020-03-29-region.tsv", col_types = "ciccDciiccdidD")
+region <- read_tsv("./2020-04-05-region.tsv", col_types = "ciccDciiccdidD")
 
 region %>%
   filter(type == "sub-region") %>%
