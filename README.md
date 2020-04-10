@@ -12,7 +12,7 @@ Last updated on the 10th of April 2020, with data up to the 5th of April
 
 ## Data Quality
 
-The onus is on you to check against the originnal PDF files, but this
+The onus is on you to check against the original PDF files, but this
 should be okay to use. Previous problems have been fixed. It has been
 checked against similar work by the [Office for National Statistics Data
 Science
