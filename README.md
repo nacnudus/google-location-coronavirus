@@ -34,11 +34,18 @@ changes between countries or regions.
 
 ## Data download
 
-Download a dated file of
-[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-country.tsv)
+Download zipped tab-separated files of the
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/country.zip)
 or [United States
-counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-region.tsv).
-They are tab-separated.
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/region.zip).
+Google publishes the data as a sliding window, so some dates appear in
+several reports, and recent reports only include recent dates. These
+files cover all dates reported so far, and keep only the latest version
+of each data point.
+
+Files for each report are also available, named by the date of the
+report, for example `2020-03-29-country.tsv` for countries and
+`2020-03-29-regions.tsv` for (so far) United States counties.
 
 ## Method
 
