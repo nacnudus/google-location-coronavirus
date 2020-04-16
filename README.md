@@ -7,8 +7,8 @@ Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.
 
-Last updated on the 10th of April 2020, with data up to the 5th of April
-2020.
+Last updated on the 16th of April 2020, with data up to the 11th of
+April 2020.
 
 ## Data Quality
 
@@ -34,10 +34,10 @@ changes between countries or regions.
 
 ## Data download
 
-For now, download a dated file of
-[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-country.tsv)
+Download a dated file of
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-country.tsv)
 or [United States
-counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-region.tsv).
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-region.tsv).
 They are tab-separated.
 
 ## Method

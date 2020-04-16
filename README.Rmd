@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 Archive of data extracted from Google's [Community Mobility
 Reports](https://www.google.com/covid19/mobility/).  All countries are included.
 
-Last updated on the 10th of April 2020, with data up to the 5th of April 2020.
+Last updated on the 16th of April 2020, with data up to the 11th of April 2020.
 
 ## Data Quality
 
@@ -44,7 +44,7 @@ library(plotly)
 
 one_percent <- partial(scales::percent, accuracy = 1)
 
-country <- read_tsv("./2020-04-05-country.tsv", col_types = "ciccDciiccdidD")
+country <- read_tsv("country.tsv", col_types = "ciccDciiccdidD")
 
 country %>%
   filter(type == "country") %>%
@@ -57,11 +57,12 @@ country %>%
        title = "Google Community Mobility Reports per Country",
        subtitle = "Comparison between countries is not recommended") +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ```{r plot-us-counties-by-category, echo = FALSE, message = FALSE, cache = TRUE}
-region <- read_tsv("./2020-04-05-region.tsv", col_types = "ciccDciiccdidD")
+region <- read_tsv("region.tsv", col_types = "ciccDciiccdidD")
 
 region %>%
   filter(type == "sub-region") %>%
@@ -75,15 +76,16 @@ region %>%
        title = "Google Community Mobility Reports per US county",
        subtitle = "Comparison between regions is not recommended") +
   theme_bw() +
-  theme(panel.grid = element_blank())
+  theme(panel.grid = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
 ## Data download
 
-For now, download a dated file of
-[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-country.tsv)
+Download a dated file of
+[countries](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-country.tsv)
 or [United States
-counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-05-region.tsv).
+counties](https://raw.githubusercontent.com/nacnudus/google-location-coronavirus/master/2020-04-11-region.tsv).
 They are tab-separated.
 
 ## Method
