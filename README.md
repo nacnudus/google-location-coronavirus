@@ -3,6 +3,9 @@
 
 # Google Location data during the Covid-19 period
 
+**Google now publishes [official CSV
+files](https://www.google.com/covid19/mobility/)**
+
 Archive of data extracted from Google’s [Community Mobility
 Reports](https://www.google.com/covid19/mobility/). All countries are
 included.

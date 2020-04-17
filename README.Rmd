@@ -15,10 +15,14 @@ knitr::opts_chunk$set(
 
 # Google Location data during the Covid-19 period
 
+**Google now publishes [official CSV
+files](https://www.google.com/covid19/mobility/)**
+
 Archive of data extracted from Google's [Community Mobility
 Reports](https://www.google.com/covid19/mobility/).  All countries are included.
 
 Last updated on the 16th of April 2020, with data up to the 11th of April 2020.
+
 
 ## Data Quality
 
