@@ -223,7 +223,7 @@ extract_categories <- function(type, page, text) {
   text %>%
     filter(
       switch(type,
-        country = !(page == 1 & y < 342) & (height == 13),
+        country = !(page == 1 & y <= 303) & (height == 13),
         region = (y %in% c(82, 220, 409, 547)) & (height == 11)
       )
     ) %>%
